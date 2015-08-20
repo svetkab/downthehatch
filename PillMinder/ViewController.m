@@ -44,6 +44,9 @@
 {
     [super viewDidLoad];
     
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleLocalNotificationsUpdate) name:@"LocalNotificationsUpdate" object:nil];
+
+    
     self.medicationLogPath = [[self applicationDocumentsDirectory] stringByAppendingPathComponent:@"medication-log.csv"];
 
     self.stepper.alpha = 0.0f;
@@ -54,8 +57,6 @@
     
     [self setValueFromStepper];
     
-    UIApplication *app = [UIApplication sharedApplication];
-    self.alarms = [app scheduledLocalNotifications];
 }
 
 -(void) viewDidAppear:(BOOL)animated
@@ -67,8 +68,8 @@
     self.timeIntervalAfterMeal = [userDefaults integerForKey: @"pillminder.timeIntervalAfterMeal"];
     
     [self reloadEatAndTakeMedsSections];
-    [self.activeAlarmsTableView reloadData];
-    [self changeTableHeight];
+    
+    [self updateActiveAlarmsTableView];
     
 }
 
@@ -150,7 +151,7 @@
     
         AppDelegate* appDelegate = ((AppDelegate*)[[UIApplication sharedApplication] delegate]) ;
     
-        [appDelegate scheduleNotification:self.timeIntervalBeforeMeal alertBody:kBeforeMealMedTakenTimeToEatMessage];
+    [appDelegate scheduleNotification:self.timeIntervalBeforeMeal alertBody:kBeforeMealMedTakenTimeToEatMessage alertTitle:kBeforeMealMedTakenTimeToEatTitle];
             self.medsButton.enabled = NO;
             
         NSString *dateString =  [NSDateFormatter localizedStringFromDate:[[NSDate date] dateByAddingTimeInterval:self.timeIntervalBeforeMeal*60] dateStyle:NSDateFormatterNoStyle timeStyle:NSDateFormatterShortStyle];
@@ -164,11 +165,7 @@
     
     [self writeEntryToCSVFile];
     
-    UIApplication *app = [UIApplication sharedApplication];
-    self.alarms = [app scheduledLocalNotifications];
-    
-    [self.activeAlarmsTableView reloadData];
-    [self changeTableHeight];
+    [self updateActiveAlarmsTableView];
     
 }
 
@@ -200,7 +197,7 @@
     
     AppDelegate* appDelegate = ((AppDelegate*)[[UIApplication sharedApplication] delegate]) ;
 
-    [appDelegate scheduleNotification:self.timeIntervalAfterMeal alertBody:kScheduleNextAfterMealDoseMessage];
+    [appDelegate scheduleNotification:self.timeIntervalAfterMeal alertBody:kScheduleNextAfterMealDoseMessage alertTitle:kScheduleNextAfterMealDoseTitle];
     self.eatButton.enabled = NO;
         
     NSString *dateString =  [NSDateFormatter localizedStringFromDate:[[NSDate date] dateByAddingTimeInterval:self.timeIntervalAfterMeal*60] dateStyle:NSDateFormatterNoStyle timeStyle:NSDateFormatterShortStyle];
@@ -213,12 +210,7 @@
     
     [self writeEntryToCSVFile];
     
-    UIApplication *app = [UIApplication sharedApplication];
-    self.alarms = [app scheduledLocalNotifications];
-    
-    [self.activeAlarmsTableView reloadData];
-    
-    [self changeTableHeight];
+    [self updateActiveAlarmsTableView];
 }
 
 -(UILocalNotification*) notificationWithAlertBody:(NSString*) alertBody
@@ -251,9 +243,9 @@
     AppDelegate* appDelegate = ((AppDelegate*)[[UIApplication sharedApplication] delegate]) ;
     if (self.lastTapped == self.medsButton) {
         //correctedTimeInterval -= self.timeIntervalBeforeMeal;
-        [appDelegate scheduleNotification:correctedTimeInterval alertBody:kScheduleNextBeforeMealDoseMessage];
+        [appDelegate scheduleNotification:correctedTimeInterval alertBody:kScheduleNextBeforeMealDoseMessage alertTitle:kScheduleNextBeforeMealDoseTitle];
     }else{
-        [appDelegate scheduleNotification:correctedTimeInterval alertBody:kTimeToEatMessage];
+        [appDelegate scheduleNotification:correctedTimeInterval alertBody:kTimeToEatMessage alertTitle:kTimeToEatTitle];
     }
     
     self.stepper.alpha = 0.0f;
@@ -262,12 +254,7 @@
     self.setAlarm.alpha = 0.0f;
     
     
-    UIApplication *app = [UIApplication sharedApplication];
-    
-    self.alarms = [app scheduledLocalNotifications];
-    
-    [self.activeAlarmsTableView reloadData];
-    [self changeTableHeight];
+    [self updateActiveAlarmsTableView];
 }
 
 - (IBAction)logButtonTapped:(id)sender
@@ -349,12 +336,24 @@
     
     UILocalNotification * notification = (UILocalNotification*)[self.alarms objectAtIndex:indexPath.row];
     
-    cell.textLabel.text = notification.alertBody;
+    cell.detailTextLabel.text = notification.alertTitle;
     
-    NSString *dateString =  [NSDateFormatter localizedStringFromDate:notification.fireDate dateStyle:NSDateFormatterMediumStyle timeStyle:NSDateFormatterShortStyle];
+    NSString *dateString;
+    NSCalendar *calendar = [NSCalendar currentCalendar];
+    
+    NSDateComponents *componentsForFirstDate = [calendar components:NSCalendarUnitDay|NSCalendarUnitMonth|NSCalendarUnitYear fromDate:[NSDate date]];
+    
+    NSDateComponents *componentsForSecondDate = [calendar components:NSCalendarUnitDay|NSCalendarUnitMonth|NSCalendarUnitYear fromDate:notification.fireDate];
     
     
-    cell.detailTextLabel.text = [NSString stringWithFormat: @"%@", dateString];
+        
+    if ([componentsForFirstDate day] == [componentsForSecondDate day]) {
+        dateString =  [NSDateFormatter localizedStringFromDate:notification.fireDate dateStyle:NSDateFormatterNoStyle timeStyle:NSDateFormatterShortStyle];
+    } else {
+         dateString =  [NSDateFormatter localizedStringFromDate:notification.fireDate dateStyle:NSDateFormatterMediumStyle timeStyle:NSDateFormatterShortStyle];
+    }
+    
+    cell.textLabel.text = [NSString stringWithFormat: @"%@", dateString];
     
     return cell;
 }
@@ -424,4 +423,13 @@
     [self reloadEatAndTakeMedsSections];
 }
 
+-(void)handleLocalNotificationsUpdate{
+    [self updateActiveAlarmsTableView];
+}
+-(void) updateActiveAlarmsTableView{
+    UIApplication *app = [UIApplication sharedApplication];
+    self.alarms = [app scheduledLocalNotifications];
+    [self.activeAlarmsTableView reloadData];
+    [self changeTableHeight];
+}
 @end

@@ -83,6 +83,11 @@
                                      otherButtonTitles:nil];
  
     [alertView show];
+    //TODO: update active notifications table:
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"LocalNotificationsUpdate" object:nil userInfo:nil];
+
+    
 }
 
 - (void)application:(UIApplication *)application handleWatchKitExtensionRequest:(NSDictionary *)userInfo reply:(void(^)(NSDictionary *replyInfo))reply {
@@ -104,7 +109,7 @@
     
 }
 
-- (void) scheduleNotification:(NSInteger)minutesValue alertBody:(NSString*)alertBody
+- (void) scheduleNotification:(NSInteger)minutesValue alertBody:(NSString*)alertBody alertTitle:(NSString*) alertTitle
 {
     //TEMP:
     //NSInteger seconds = minutesValue;
@@ -119,6 +124,7 @@
     notification.alertBody = alertBody;
     notification.fireDate = [NSDate dateWithTimeIntervalSinceNow:seconds];
     notification.soundName = UILocalNotificationDefaultSoundName;
+    notification.alertTitle = alertTitle;
     
     NSLog(@"Local Notification %@", notification);
     
