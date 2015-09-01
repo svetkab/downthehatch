@@ -165,7 +165,6 @@
     
     [self writeEntryToCSVFile];
     
-    [self updateActiveAlarmsTableView];
     
 }
 
@@ -210,7 +209,6 @@
     
     [self writeEntryToCSVFile];
     
-    [self updateActiveAlarmsTableView];
 }
 
 -(UILocalNotification*) notificationWithAlertBody:(NSString*) alertBody
@@ -253,8 +251,8 @@
     self.instructionLabel.alpha = 0.0f;
     self.setAlarm.alpha = 0.0f;
     
+    [self writeEntryToCSVFile];
     
-    [self updateActiveAlarmsTableView];
 }
 
 - (IBAction)logButtonTapped:(id)sender
@@ -308,8 +306,7 @@
 {
     
 }
--(IBAction)gotoMainViewControllerToo
-:(UIStoryboardSegue *)sender
+-(IBAction)gotoMainViewControllerToo:(UIStoryboardSegue *)sender
 {
     
 }

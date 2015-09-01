@@ -111,24 +111,35 @@
 
 - (void) scheduleNotification:(NSInteger)minutesValue alertBody:(NSString*)alertBody alertTitle:(NSString*) alertTitle
 {
-    //TEMP:
-    //NSInteger seconds = minutesValue;
-    // Convert minutes to seconds
-    NSInteger seconds = minutesValue*60;
+        //TEMP:
+        //NSInteger seconds = minutesValue;
+        // Convert minutes to seconds
+        NSInteger seconds = minutesValue*60;
+        
+        NSLog(@"Setting alarm for %ld seconds", (long)seconds);
+        
+        // Schedule local notification
+        
+        UILocalNotification *notification = [[UILocalNotification alloc] init];
+        notification.alertBody = alertBody;
+        notification.fireDate = [NSDate dateWithTimeIntervalSinceNow:seconds];
+        notification.soundName = UILocalNotificationDefaultSoundName;
+        notification.alertTitle = alertTitle;
+        
+        NSLog(@"Local Notification %@", notification);
+        
+        [[UIApplication sharedApplication] scheduleLocalNotification:notification];
+        //[[UIApplication sharedApplication] presentLocalNotificationNow:notification];
     
-    NSLog(@"Setting alarm for %ld seconds", (long)seconds);
-    
-    // Schedule local notification
-    
-    UILocalNotification *notification = [[UILocalNotification alloc] init];
-    notification.alertBody = alertBody;
-    notification.fireDate = [NSDate dateWithTimeIntervalSinceNow:seconds];
-    notification.soundName = UILocalNotificationDefaultSoundName;
-    notification.alertTitle = alertTitle;
-    
-    NSLog(@"Local Notification %@", notification);
-    
-    [[UIApplication sharedApplication] scheduleLocalNotification:notification];
-    //[[UIApplication sharedApplication] presentLocalNotificationNow:notification];
+    /*
+     Performs the specified selector on the current thread during the next run loop cycle and after an optional delay period. Because it waits until the next run loop cycle to perform the selector, these methods provide an automatic mini delay from the currently executing code.
+     
+     http://stackoverflow.com/questions/28985812/uiapplication-sharedapplication-scheduledlocalnotifications-is-always-empty
+    */
+    [self performSelector:@selector(postNotification) withObject:nil afterDelay:0];
+   
+}
+-(void)postNotification{
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"LocalNotificationsUpdate" object:nil userInfo:nil];
 }
 @end
